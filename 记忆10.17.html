@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#f7f6f2">
+<title>记忆溯回 — Memory Archive</title>
+<style>
+:root {
+  --bg:#f7f6f2; --paper:#fffefa; --ink:#252a25;
+  --muted:#85877f; --line:#e6e4dc; --green:#405c4b;
+  --soft:#e8ece5; --serif:Georgia,"Songti SC",serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC",
+  "Microsoft YaHei",sans-serif;font-size:14px;line-height:1.7}
+button,input,textarea,select{font:inherit}
+button{cursor:pointer}
+button:focus-visible,input:focus-visible,textarea:focus-visible{
+  outline:2px solid var(--green);outline-offset:3px}
+a{color:inherit;text-decoration:none}
+.topbar{height:76px;border-bottom:1px solid var(--line);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 6%;background:rgba(247,246,242,.95);gap:20px}
+.brand{display:flex;align-items:center;gap:12px}
+.brand-icon{width:36px;height:36px;background:var(--green);color:white;
+  display:grid;place-items:center;border-radius:3px;font-size:20px}
+.brand-name{font-family:var(--serif);font-size:20px;letter-spacing:2px}
+.brand-sub{font-size:9px;letter-spacing:2px;color:var(--muted)}
+.nav{display:flex;gap:28px;align-items:center}
+.nav button{border:0;background:none;color:var(--muted);padding:8px 0}
+.nav button.active,.nav button:hover{color:var(--green)}
+.nav button.active{border-bottom:1px solid var(--green)}
+.primary{border:0;background:var(--green);color:white;padding:11px 18px}
+.primary:hover{background:#2d4435}
+.secondary{background:transparent;border:1px solid var(--line);
+  padding:9px 15px;color:var(--ink)}
+.icon-btn{background:none;border:1px solid var(--line);padding:7px 11px}
+main{max-width:1180px;margin:auto;padding:48px 32px 80px}
+.eyebrow{font-size:10px;letter-spacing:2.5px;color:var(--muted)}
+h1,h2,h3,p{margin-top:0}
+h1,h2{font-weight:400}
+h1{font-family:var(--serif);font-size:clamp(36px,5vw,60px);
+  line-height:1.28;letter-spacing:-1px;margin:16px 0}
+h2{font-family:var(--serif);font-size:29px;line-height:1.4}
+h3{font-weight:500;font-size:16px}
+.muted{color:var(--muted)}
+.hero{display:grid;grid-template-columns:1fr .86fr;gap:60px;
+  align-items:center;padding:35px 0 55px}
+.hero-copy p{max-width:420px;color:#74766e;line-height:2}
+.hero-image{position:relative;min-height:340px;overflow:hidden;background:#e8e3d8}
+.hero-image img{width:100%;height:390px;object-fit:cover;display:block;
+  filter:saturate(.72)}
+.image-caption{position:absolute;bottom:18px;left:18px;color:white;
+  text-shadow:0 1px 8px #333;font-size:11px;letter-spacing:1px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);
+  border-top:1px solid var(--line);border-bottom:1px solid var(--line);
+  margin-bottom:64px;padding:20px 0}
+.stat{padding:0 22px;border-right:1px solid var(--line)}
+.stat:first-child{padding-left:0}
+.stat:last-child{border:0}
+.stat strong{display:block;font-family:var(--serif);font-size:27px;font-weight:400}
+.stat span{font-size:11px;color:var(--muted)}
+.section-head{display:flex;justify-content:space-between;align-items:end;
+  gap:20px;margin-bottom:25px}
+.section-head p{color:var(--muted);margin-bottom:0}
+.section{margin-top:60px}
+.memory-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px}
+.memory-card{min-width:0;cursor:pointer}
+.memory-card img{width:100%;height:210px;object-fit:cover;display:block;
+  background:#e5e2d8;filter:saturate(.75);transition:filter .25s}
+.memory-card:hover img{filter:saturate(1)}
+.memory-card h3{margin:13px 0 5px}
+.memory-meta{font-size:11px;color:var(--muted)}
+.tag{display:inline-block;background:var(--soft);color:var(--green);
+  padding:3px 8px;font-size:10px;margin-top:9px}
+.quote{margin:65px 0;padding:45px 20px;text-align:center;
+  border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.quote p{font-family:var(--serif);font-size:clamp(21px,3vw,30px);
+  line-height:1.9;margin-bottom:10px}
+.quote span{font-size:10px;color:var(--muted);letter-spacing:2px}
+.page-title{padding:18px 0 34px}
+.page-title p{color:var(--muted)}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:28px}
+.search{background:var(--paper);border:1px solid var(--line);
+  padding:10px 13px;min-width:200px;flex:1}
+.filter{background:transparent;border:1px solid var(--line);
+  padding:9px 13px;color:var(--muted)}
+.filter.active{background:var(--soft);color:var(--green);border-color:#d5ded3}
+.timeline{max-width:850px;margin:auto}
+.year-label{font-family:var(--serif);font-size:32px;margin:35px 0 20px}
+.timeline-item{display:grid;grid-template-columns:100px 20px 1fr;gap:15px;
+  padding-bottom:32px}
+.timeline-date{font-size:12px;color:var(--muted);padding-top:5px}
+.timeline-line{position:relative;border-left:1px solid #d7d9d0;margin-left:5px}
+.timeline-line:before{content:"";position:absolute;top:8px;left:-4px;
+  width:7px;height:7px;background:var(--green);border-radius:50%}
+.timeline-content{border-bottom:1px solid var(--line);padding-bottom:24px}
+.timeline-content h3{margin:0 0 6px}
+.timeline-content p{color:#777970;margin:0 0 10px}
+.timeline-content img{width:min(100%,390px);height:180px;object-fit:cover}
+.diary-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.diary-card{background:var(--paper);border:1px solid var(--line);
+  padding:25px;cursor:pointer;transition:border-color .2s}
+.diary-card:hover{border-color:#a7b4a5}
+.diary-date{font-size:10px;color:var(--muted);letter-spacing:1px}
+.diary-card h3{font-family:var(--serif);font-size:23px;font-weight:400;margin:14px 0}
+.diary-card p{color:#72746d;line-height:1.9}
+.map-layout{display:grid;grid-template-columns:1fr 300px;gap:25px}
+.map-canvas{min-height:420px;position:relative;overflow:hidden;
+  background:#e9e9df;border:1px solid #deded3}
+.map-canvas:before,.map-canvas:after{content:"";position:absolute;
+  width:150%;height:80px;left:-20%;top:36%;transform:rotate(-25deg);
+  border:18px solid #f8f7f0;border-left:0;border-right:0}
+.map-canvas:after{top:70%;transform:rotate(34deg);height:35px;border-width:10px}
+.map-road{position:absolute;background:#d5dfd0;height:65px;width:150%;
+  top:15%;left:-10%;transform:rotate(48deg)}
+.map-water{position:absolute;right:-70px;top:-80px;width:170px;height:600px;
+  background:#d4e0df;transform:rotate(15deg);border-radius:50%}
+.map-pin{position:absolute;z-index:2;transform:translate(-50%,-100%);
+  border:0;background:var(--green);color:white;border-radius:3px;
+  padding:7px 10px;box-shadow:0 2px 10px #7774;white-space:nowrap}
+.map-pin:after{content:"";position:absolute;bottom:-5px;left:50%;
+  width:9px;height:9px;background:var(--green);transform:translateX(-50%) rotate(45deg)}
+.map-pin.active{background:#b2784e}
+.map-pin.active:after{background:#b2784e}
+.place-list{display:flex;flex-direction:column;gap:10px}
+.place{background:var(--paper);border:1px solid var(--line);padding:15px;
+  cursor:pointer;text-align:left}
+.place.active{border-color:var(--green);background:#eef0e9}
+.place strong{display:block;font-weight:500}
+.place span{font-size:11px;color:var(--muted)}
+.empty{padding:50px 15px;text-align:center;color:var(--muted)}
+footer{border-top:1px solid var(--line);padding:32px 6%;
+  display:flex;justify-content:space-between;gap:20px;color:var(--muted);
+  font-size:11px}
+.modal-backdrop{position:fixed;inset:0;background:#20251f88;z-index:10;
+  display:none;align-items:center;justify-content:center;padding:18px}
+.modal-backdrop.show{display:flex}
+.modal{width:min(540px,100%);max-height:90vh;overflow:auto;
+  background:var(--bg);padding:30px}
+.modal-head{display:flex;justify-content:space-between;align-items:center}
+.modal-head h2{font-size:25px;margin-bottom:20px}
+.form-row{margin:15px 0}
+.form-row label{display:block;font-size:12px;margin-bottom:7px;color:#62675e}
+.form-row input,.form-row textarea,.form-row select{width:100%;
+  padding:11px;border:1px solid var(--line);background:var(--paper);color:var(--ink)}
+.form-row textarea{min-height:110px;resize:vertical}
+.form-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}
+.detail-image{width:100%;max-height:260px;object-fit:cover;margin:12px 0}
+.mobile-menu{display:none}
+@media(max-width:760px){
+ .topbar{height:auto;min-height:68px;padding:13px 5%;flex-wrap:wrap}
+ .nav{order:3;width:100%;gap:0;justify-content:space-between;overflow:auto}
+ .nav button{font-size:12px;white-space:nowrap;margin-right:12px}
+ .topbar>.primary{padding:8px 10px;font-size:12px}
+ main{padding:25px 5% 55px}
+ .hero{grid-template-columns:1fr;gap:25px;padding-top:15px}
+ .hero-image img{height:280px}
+ .stats{margin-bottom:42px}
+ .stat{padding:0 10px}
+ .stat strong{font-size:22px}
+ .memory-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}
+ .memory-card img{height:155px}
+ .map-layout{grid-template-columns:1fr}
+ .map-canvas{min-height:330px}
+ .place-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+ .diary-list{grid-template-columns:1fr}
+ .timeline-item{grid-template-columns:65px 14px 1fr;gap:10px}
+ .timeline-content img{height:140px}
+ .section{margin-top:45px}
+ footer{padding:25px 5%;flex-direction:column}
+}
+@media(max-width:390px){
+ .memory-grid{grid-template-columns:1fr}
+ .memory-card img{height:210px}
+ .brand-sub{letter-spacing:1px}
+}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <a class="brand" href="#" onclick="go('home');return false">
+    <div class="brand-icon">忆</div>
+    <div><div class="brand-name">记忆溯回</div>
+      <div class="brand-sub">MEMORY ARCHIVE</div></div>
+  </a>
+  <nav class="nav" aria-label="主导航">
+    <button data-page="home" class="active">首页</button>
+    <button data-page="timeline">时间轴</button>
+    <button data-page="album">记忆相册</button>
+    <button data-page="diary">时光日记</button>
+    <button data-page="map">记忆地图</button>
+  </nav>
+  <button class="primary" onclick="openForm()">＋ 记录记忆</button>
+</header>
+<main id="app"></main>
+<footer>
+  <div>记忆溯回 · MEMORY ARCHIVE</div>
+  <div>保存时间的痕迹，也保存曾经的自己。</div>
+  <div>DESIGNED FOR MEMORY</div>
+</footer>
+
+<div class="modal-backdrop" id="modal" role="dialog" aria-modal="true"
+  aria-labelledby="modal-title" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-head">
+      <h2 id="modal-title">收藏一段记忆</h2>
+      <button class="icon-btn" onclick="closeModal()" aria-label="关闭">✕</button>
+    </div>
+    <form id="memory-form">
+      <input type="hidden" id="edit-id">
+      <div class="form-row"><label for="m-title">记忆标题 *</label>
+        <input id="m-title" required maxlength="80" placeholder="例如：夏日的最后一场雨"></div>
+      <div class="form-row"><label for="m-date">发生日期 *</label>
+        <input id="m-date" type="date" required></div>
+      <div class="form-row"><label for="m-category">记忆分类</label>
+        <select id="m-category"><option>日常</option><option>旅行</option>
+          <option>成长</option><option>家人</option><option>朋友</option>
+          <option>校园</option><option>其他</option></select></div>
+      <div class="form-row"><label for="m-place">发生地点</label>
+        <input id="m-place" maxlength="80" placeholder="例如：杭州 · 西湖"></div>
+      <div class="form-row"><label for="m-image">照片链接（可选）</label>
+        <input id="m-image" type="url" placeholder="https://example.com/photo.jpg"></div>
+      <div class="form-row"><label for="m-content">记忆描述</label>
+        <textarea id="m-content" maxlength="3000" placeholder="那天发生了什么？你记得怎样的声音、气味或情绪？"></textarea></div>
+      <div class="form-actions">
+        <button type="button" class="secondary" onclick="closeModal()">取消</button>
+        <button type="submit" class="primary">保存记忆</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+const photo = {
+  sea:"https://images.unsplash.com/photo-1500375592092-40eb2168fd21?auto=format&fit=crop&w=1000&q=80",
+  room:"https://images.unsplash.com/photo-1449247709967-d4461a6a6103?auto=format&fit=crop&w=1000&q=80",
+  flowers:"https://images.unsplash.com/photo-1490750967868-88aa4486c946?auto=format&fit=crop&w=1000&q=80",
+  street:"https://images.unsplash.com/photo-1519608487953-e999c86e7455?auto=format&fit=crop&w=1000&q=80",
+  mountain:"https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=1000&q=80",
+  cafe:"https://images.unsplash.com/photo-1445116572660-236099ec97a0?auto=format&fit=crop&w=1000&q=80"
+};
+const seed = [
+ {id:"s1",title:"海风吹过的那个夏天",date:"2025-08-16",category:"旅行",place:"青岛 · 海边",image:photo.sea,content:"傍晚的海面泛着微光，风里有咸咸的气息。我们沿着海岸走了很久，没有人着急回去。那一刻，时间好像变得很慢。"},
+ {id:"s2",title:"窗边的午后",date:"2025-05-21",category:"日常",place:"自己的房间",image:photo.room,content:"阳光落在桌面上，灰尘在光里缓缓移动。读到一半的书、凉掉的茶，以及一个什么都不必完成的下午。"},
+ {id:"s3",title:"花开的时候",date:"2025-03-09",category:"成长",place:"校园花园",image:photo.flowers,content:"路过花园时突然发现，去年还很小的树已经长高了。原来很多改变都不是一瞬间发生的。"},
+ {id:"s4",title:"城市入夜以后",date:"2024-12-18",category:"朋友",place:"老城区",image:photo.street,content:"我们在街上绕了远路，聊起很久以前的事情。后来谁也不记得那顿饭吃了什么，只记得当时很快乐。"},
+ {id:"s5",title:"第一次看见雪山",date:"2024-07-12",category:"旅行",place:"远方的山",image:photo.mountain,content:"云层打开的一瞬间，山峰突然显现。那些照片都没有现场震撼，但它们帮我记住了那天的颜色。"},
+ {id:"s6",title:"一杯咖啡的时间",date:"2024-04-06",category:"日常",place:"街角咖啡馆",image:photo.cafe,content:"点了一杯平常的咖啡，坐在靠窗的位置，看陌生人经过。偶尔什么都不做，也是一种生活。"}
+];
+const diariesSeed = [
+ {id:"d1",date:"2025-08-16",title:"关于告别",content:"有些告别没有仪式。只是某一天，你走过熟悉的路，发现自己已经不再期待遇见某个人。"},
+ {id:"d2",date:"2025-05-21",title:"慢一点也没关系",content:"以前总觉得生活应该有明确的进度。现在开始明白，成长不是一条需要赶上的线。"},
+ {id:"d3",date:"2025-03-09",title:"给未来的自己",content:"希望你还记得今天的小事。记得你曾经认真喜欢过一些东西，也认真地期待过未来。"},
+ {id:"d4",date:"2024-12-18",title:"那些普通的日子",content:"后来想起的，往往不是特别盛大的时刻，而是有人等你吃饭，有人记得你说过的话。"}
+];
+let memories = load("memory-archive-v1",seed);
+let diaries = load("memory-diaries-v1",diariesSeed);
+let page="home", filter="全部", query="", selectedPin=null;
+
+function load(key,fallback){
+ try{
+   const saved=localStorage.getItem(key);
+   return saved?JSON.parse(saved):fallback.map(x=>({...x}));
+ }catch(e){return fallback.map(x=>({...x}));}
+}
+function persist(){
+ try{
+  localStorage.setItem("memory-archive-v1",JSON.stringify(memories));
+  localStorage.setItem("memory-diaries-v1",JSON.stringify(diaries));
+ }catch(e){alert("浏览器存储空间不足，数据可能无法保存。请导出或备份内容。");}
+}
+function esc(s=""){
+ return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+function safeImage(url){
+ try{const u=new URL(url,location.href);return ["http:","https:"].includes(u.protocol)?u.href:"";}
+ catch(e){return "";}
+}
+function dateText(s){
+ if(!s)return "";
+ const d=new Date(s+"T00:00:00");
+ return Number.isNaN(d.getTime())?s:
+  `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,"0")}.${String(d.getDate()).padStart(2,"0")}`;
+}
+function sorted(){return [...memories].sort((a,b)=>b.date.localeCompare(a.date));}
+function filtered(){
+ return sorted().filter(m=>(filter==="全部"||m.category===filter)&&
+  (m.title+" "+m.content+" "+m.place+" "+m.category).toLowerCase().includes(query.toLowerCase()));
+}
+function imageHTML(url,alt,cls=""){
+ const src=safeImage(url);
+ return src?`<img class="${cls}" src="${esc(src)}" alt="${esc(alt)}" loading="lazy" onerror="this.style.display='none'">`:"";
+}
+function card(m){
+ return `<article class="memory-card" onclick="detail('${esc(m.id)}')" tabindex="0"
+  onkeydown="if(event.key==='Enter')detail('${esc(m.id)}')">
+  ${imageHTML(m.image,m.title)}
+  <div class="memory-meta">${dateText(m.date)} · ${esc(m.place||m.category)}</div>
+  <h3>${esc(m.title)}</h3><div class="muted">${esc(m.content).slice(0,54)}${m.content.length>54?"…":""}</div>
+  <span class="tag">${esc(m.category)}</span></article>`;
+}
+function header(eyebrow,title,desc){
+ return `<div class="page-title"><div class="eyebrow">${eyebrow}</div>
+ <h1>${title}</h1><p>${desc}</p></div>`;
+}
+function toolbar(){
+ const cats=["全部","日常","旅行","成长","家人","朋友","校园","其他"];
+ return `<div class="toolbar"><input class="search" id="search" value="${esc(query)}"
+ placeholder="搜索标题、地点或关键词…" aria-label="搜索记忆" oninput="setQuery(this.value)">
+ ${cats.map(c=>`<button class="filter ${filter===c?'active':''}" onclick="setFilter('${c}')">${c}</button>`).join("")}
+ </div>`;
+}
+function go(p){
+ page=p;query="";filter="全部";
+ document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===p));
+ render();window.scrollTo({top:0,behavior:"smooth"});
+}
+document.querySelectorAll(".nav button").forEach(b=>b.addEventListener("click",()=>go(b.dataset.page)));
+
+function home(){
+ const recent=sorted().slice(0,3);
+ return `<section class="hero"><div class="hero-copy">
+  <div class="eyebrow">PERSONAL ARCHIVE / NO. 001</div>
+  <h1>每一段记忆，<br>都值得被重新发现。</h1>
+  <p>在时间的褶皱里，收藏那些不曾真正离开的瞬间。让照片、文字与地点，重新连接起过去的自己。</p>
+  <button class="primary" onclick="go('timeline')">开始溯回　↗</button>
+  <button class="secondary" onclick="openForm()" style="margin-left:8px">记录此刻</button>
+ </div><div class="hero-image">
+  ${imageHTML(photo.room,"午后光线照进安静的房间")}
+  <div class="image-caption">A MOMENT, PRESERVED IN TIME.</div>
+ </div></section>
+ <div class="stats">
+  <div class="stat"><strong>${memories.length}</strong><span>段收藏的记忆</span></div>
+  <div class="stat"><strong>${new Set(memories.map(m=>m.date.slice(0,4))).size}</strong><span>个被记录的年份</span></div>
+  <div class="stat"><strong>${new Set(memories.map(m=>m.place).filter(Boolean)).size}</strong><span>处记忆坐标</span></div>
+ </div>
+ <section><div class="section-head"><div><div class="eyebrow">RECENT MEMORIES</div><h2>最近的记忆</h2></div>
+ <button class="secondary" onclick="go('album')">浏览全部　↗</button></div>
+ <div class="memory-grid">${recent.map(card).join("")||'<div class="empty">这里还没有记忆，来收藏第一个瞬间吧。</div>'}</div></section>
+ <div class="quote"><p>“有些瞬间在发生时并不起眼，<br>却在很久以后，成为我们想回去的地方。”</p>
+ <span>NOTES ON REMEMBERING</span></div>
+ <section><div class="section-head"><div><div class="eyebrow">YOUR JOURNEY</div><h2>用不同方式，重新遇见过去</h2></div></div>
+ <div class="memory-grid">
+ ${[["timeline","01 / TIME","沿着时间轴回望","每个年份，都有值得停留的故事。"],
+ ["album","02 / IMAGE","收藏影像与瞬间","让那些模糊的画面，再次变得清晰。"],
+ ["diary","03 / WORDS","读写时光日记","把当时的感受，留给未来的自己。"]].map(x=>`<article class="diary-card" onclick="go('${x[0]}')"><div class="eyebrow">${x[1]}</div><h3>${x[2]}</h3><p>${x[3]}</p><span>探索更多　↗</span></article>`).join("")}
+ </div></section>`;
+}
+function timeline(){
+ const list=filtered();let last="";
+ const items=list.map(m=>{
+  const year=m.date.slice(0,4);
+  const label=year!==last?`<div class="year-label">${year}</div>`:"";
+  last=year;
+  return `${label}<div class="timeline-item"><div class="timeline-date">${dateText(m.date)}</div>
+  <div class="timeline-line"></div><div class="timeline-content">
+  <h3><a href="#" onclick="detail('${esc(m.id)}');return false">${esc(m.title)}</a></h3>
+  <p>${esc(m.content)}</p>${imageHTML(m.image,m.title)}
+  <div class="memory-meta" style="margin-top:9px">${esc(m.place||"未记录地点")} · ${esc(m.category)}
+  <button class="icon-btn" style="margin-left:10px" onclick="editMemory('${esc(m.id)}')">编辑</button></div>
+  </div></div>`;
+ }).join("");
+ return header("A JOURNEY THROUGH TIME","时间轴","每个日期，都是一扇通往过去的门。")
+ +toolbar()+`<div class="timeline">${items||'<div class="empty">没有找到相关记忆。</div>'}</div>`;
+}
+function album(){
+ return header("COLLECTED MOMENTS","记忆相册","那些被镜头留住的瞬间，也留住了当时的心情。")
+ +toolbar()+`<div class="memory-grid">${filtered().map(card).join("")||'<div class="empty">暂无符合条件的记忆。</div>'}</div>`;
+}
+function diary(){
+ return header("LETTERS TO MYSELF","时光日记","写给过去，也写给尚未抵达的未来。")
+ +`<div class="section-head"><p>每一篇日记，都是一个时间切片。</p><button class="primary" onclick="newDiary()">＋ 写一篇日记</button></div>
+ <div class="diary-list">${[...diaries].sort((a,b)=>b.date.localeCompare(a.date)).map(d=>
+ `<article class="diary-card" onclick="editDiary('${esc(d.id)}')"><div class="diary-date">${dateText(d.date)}　/　PRIVATE NOTES</div>
+ <h3>${esc(d.title)}</h3><p>${esc(d.content.slice(0,140))}${d.content.length>140?"…":""}</p>
+ <div class="memory-meta">点击阅读与编辑　↗</div></article>`).join("")||'<div class="empty">还没有日记，写下今天的心情吧。</div>'}</div>`;
+}
+function mapPage(){
+ const places=[...new Set(memories.filter(m=>m.place).map(m=>m.place))];
+ const points=places.map(place=>memories.find(m=>m.place===place));
+ return header("PLACES WE REMEMBER","记忆地图","有些地方之所以特别，是因为我们曾在那里生活过。")
+ +`<div class="map-layout"><div class="map-canvas" aria-label="记忆地点示意地图">
+ <div class="map-road"></div><div class="map-water"></div>
+ ${points.map((m,i)=>`<button class="map-pin ${selectedPin===m.id?'active':''}"
+ style="left:${18+(i*29)%65}%;top:${23+(i*37)%63}%"
+ onclick="selectPin('${esc(m.id)}')">${esc(m.place)}</button>`).join("")}
+ <div style="position:absolute;bottom:12px;left:14px;font-size:10px;color:#73766b;z-index:3">MEMORY MAP / 示意布局，并非真实地理坐标</div>
+ </div><div><div class="eyebrow" style="margin-bottom:12px">SAVED PLACES · ${places.length}</div>
+ <div class="place-list">${points.map(m=>`<button class="place ${selectedPin===m.id?'active':''}" onclick="selectPin('${esc(m.id)}')">
+ <strong>${esc(m.place)}</strong><span>${dateText(m.date)} · ${esc(m.title)}</span></button>`).join("")||'<div class="empty">添加记忆并填写地点，即可在这里查看。</div>'}</div>
+ <div id="pin-detail"></div></div></div>`;
+}
+function render(){
+ const app=document.getElementById("app");
+ app.innerHTML=({home,timeline,album,diary,map:mapPage}[page]||home)();
+ if(page==="map"&&selectedPin)showPinDetail(selectedPin);
+}
+function setQuery(v){query=v;const pos=window.scrollY;render();window.scrollTo(0,pos);const el=document.getElementById("search");if(el){el.focus();el.setSelectionRange(v.length,v.length);}}
+function setFilter(v){filter=v;render();}
+function selectPin(id){selectedPin=id;render();}
+function showPinDetail(id){
+ const m=memories.find(x=>x.id===id),box=document.getElementById("pin-detail");
+ if(!m||!box)return;
+ box.innerHTML=`<div class="diary-card" style="margin-top:15px"><div class="eyebrow">MEMORY AT THIS PLACE</div>
+ <h3>${esc(m.title)}</h3><p>${esc(m.content)}</p>
+ <button class="secondary" onclick="detail('${esc(m.id)}')">查看完整记忆　↗</button></div>`;
+}
+function detail(id){
+ const m=memories.find(x=>x.id===id);if(!m)return;
+ document.getElementById("modal-title").textContent="记忆详情";
+ document.getElementById("memory-form").style.display="none";
+ const old=document.getElementById("detail-body");if(old)old.remove();
+ const body=document.createElement("div");body.id="detail-body";
+ body.innerHTML=`<div class="eyebrow">${dateText(m.date)} · ${esc(m.category)}</div>
+ <h2 style="margin-top:10px">${esc(m.title)}</h2>
+ ${imageHTML(m.image,m.title,"detail-image")}
+ <p class="muted">${esc(m.place||"未记录地点")}</p><p style="white-space:pre-wrap">${esc(m.content||"这段记忆还没有描述。")}</p>
+ <div class="form-actions"><button class="secondary" onclick="deleteMemory('${esc(m.id)}')">删除记忆</button>
+ <button class="secondary" onclick="editMemory('${esc(m.id)}')">编辑</button>
+ <button class="primary" onclick="closeModal()">完成</button></div>`;
+ document.querySelector(".modal").appendChild(body);
+ document.getElementById("modal").classList.add("show");
+}
+function cleanModal(){
+ document.getElementById("memory-form").style.display="";
+ const b=document.getElementById("detail-body");if(b)b.remove();
+}
+function closeModal(){document.getElementById("modal").classList.remove("show");cleanModal();}
+function openForm(m=null){
+ cleanModal();
+ document.getElementById("modal-title").textContent=m?"编辑记忆":"收藏一段记忆";
+ document.getElementById("edit-id").value=m?.id||"";
+ document.getElementById("m-title").value=m?.title||"";
+ document.getElementById("m-date").value=m?.date||new Date().toISOString().slice(0,10);
+ document.getElementById("m-category").value=m?.category||"日常";
+ document.getElementById("m-place").value=m?.place||"";
+ document.getElementById("m-image").value=m?.image||"";
+ document.getElementById("m-content").value=m?.content||"";
+ document.getElementById("modal").classList.add("show");
+ setTimeout(()=>document.getElementById("m-title").focus(),50);
+}
+function editMemory(id){const m=memories.find(x=>x.id===id);if(m)openForm(m);}
+function deleteMemory(id){
+ if(!confirm("确定删除这段记忆吗？此操作无法撤销。"))return;
+ memories=memories.filter(m=>m.id!==id);persist();closeModal();render();
+}
+document.getElementById("memory-form").addEventListener("submit",e=>{
+ e.preventDefault();
+ const id=document.getElementById("edit-id").value;
+ const title=document.getElementById("m-title").value.trim();
+ const date=document.getElementById("m-date").value;
+ if(!title||!date)return;
+ const existing=memories.find(m=>m.id===id);
+ const m={id:id||"m"+Date.now().toString(36)+Math.random().toString(36).slice(2,6),
+ title,date,category:document.getElementById("m-category").value,
+ place:document.getElementById("m-place").value.trim(),
+ image:safeImage(document.getElementById("m-image").value.trim()),
+ content:document.getElementById("m-content").value.trim()};
+ if(existing)memories=memories.map(x=>x.id===id?m:x);else memories.push(m);
+ persist();closeModal();render();
+});
+function newDiary(){
+ const id="d"+Date.now();
+ diaries.unshift({id,date:new Date().toISOString().slice(0,10),title:"",content:""});
+ editDiary(id,true);
+}
+function editDiary(id,isNew=false){
+ let d=diaries.find(x=>x.id===id);
+ if(!d&&isNew){d=diaries[0];}
+ if(!d)return;
+ cleanModal();
+ document.getElementById("modal-title").textContent="时光日记";
+ const form=document.getElementById("memory-form");form.style.display="none";
+ const body=document.createElement("div");body.id="detail-body";
+ body.innerHTML=`<div class="form-row"><label for="d-date">日期</label><input id="d-date" type="date" value="${esc(d.date)}"></div>
+ <div class="form-row"><label for="d-title">日记标题</label><input id="d-title" maxlength="100" value="${esc(d.title)}" placeholder="给今天取一个名字"></div>
+ <div class="form-row"><label for="d-content">写下此刻</label><textarea id="d-content" maxlength="5000" style="min-height:200px" placeholder="今天有什么想留下的？">${esc(d.content)}</textarea></div>
+ <div class="form-actions"><button class="secondary" onclick="closeModal()">取消</button>
+ <button class="primary" onclick="saveDiary('${esc(d.id)}')">保存日记</button></div>`;
+ document.querySelector(".modal").appendChild(body);
+ document.getElementById("modal").classList.add("show");
+}
+function saveDiary(id){
+ const title=document.getElementById("d-title").value.trim();
+ const date=document.getElementById("d-date").value;
+ const content=document.getElementById("d-content").value.trim();
+ if(!title||!date){alert("请填写日记标题和日期。");return;}
+ const d={id,date,title,content};
+ const i=diaries.findIndex(x=>x.id===id);
+ if(i>=0)diaries[i]=d;else diaries.push(d);
+ persist();closeModal();render();
+}
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal();});
+render();
+</script>
+</body>
+</html>
